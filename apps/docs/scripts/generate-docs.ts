@@ -1,10 +1,10 @@
 import { generateFiles } from 'fumadocs-openapi';
-import { openapi } from '@/lib/openapi';
+import { openapi } from '../src/lib/openapi';
 
 generateFiles({
   input: openapi,
-  output: './content/docs/openapi/(generated)',
+  output: './arch/content/docs/api/(generated)',
   includeDescription: true,
 }).catch((error) => {
-  console.error('Failed to build OpenAPI spec docs', error);
+  console.error('Failed to build API documentation', error);
 });

@@ -15,13 +15,15 @@ A two-service monorepo combining **Fumadocs v15** (Next.js) for beautiful MDX do
 
 ## Tech Stack
 
-- **Node.js 22** with **pnpm**
-- **Next.js 15** App Router
+- **Node.js 22+** with **pnpm 10+**
+- **Next.js 15** App Router with Turbopack
 - **Fumadocs v15** for documentation UI
-- **Kroki** for diagram rendering
+- **Turbo** for monorepo task orchestration
+- **Kroki** for diagram rendering (PlantUML, Graphviz, etc.)
 - **Mermaid** for inline diagrams
-- **React Flow** for zoomable viewer
-- **TailwindCSS 3** for styling
+- **React Flow** for zoomable diagram viewer
+- **TailwindCSS 4** for styling
+- **TypeScript 5.9** in strict mode
 - **Docker** & **Docker Compose** for containerization
 
 ## Quick Start
@@ -29,23 +31,25 @@ A two-service monorepo combining **Fumadocs v15** (Next.js) for beautiful MDX do
 ### Prerequisites
 
 - Node.js 22+
-- pnpm 9+
+- pnpm 10+
 - Docker & Docker Compose v2
+- Homebrew (for automated setup script)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/wallwhite/hyperion-docs.git
+git clone <your-repo-url>
 
 # Navigate to the project directory
 cd hyperion-docs
 
-# Install dependencies
-pnpm install
+# Option 1: One-command setup (installs dependencies & starts Docker)
+./scripts/dev.sh
 
-# Start both services (docs + kroki)
-pnpm dev
+# Option 2: Manual setup
+pnpm install  # Install dependencies
+pnpm dev      # Start both services (docs + kroki)
 ```
 
 Visit **http://localhost:3000** - changes hot-reload automatically!
@@ -66,28 +70,38 @@ pnpm stop
 hyperion-docs/
 ├── apps/
 │   └── docs/                    # Next.js + Fumadocs app
-│       ├── app/                 # Next.js App Router
-│       │   ├── api/diagram/     # Diagram proxy API
-│       │   ├── docs/            # Docs routes
-│       │   ├── layout.tsx       # Root layout
-│       │   └── page.tsx         # Home page
-│       ├── components/          # React components
-│       ├── content/docs/        # MDX documentation
-│       ├── diagrams/            # Diagram source files (.puml, .dot)
-│       ├── openapi/             # OpenAPI schema files (.yaml)
-│       ├── lib/                 # Utilities
-│       ├── mdx-components.tsx   # MDX component config
+│       ├── src/
+│       │   ├── app/             # Next.js App Router
+│       │   │   ├── api/diagram/ # Diagram proxy API
+│       │   │   ├── docs/        # Docs routes
+│       │   │   ├── layout.tsx   # Root layout
+│       │   │   └── page.tsx     # Home page
+│       │   ├── components/      # React components
+│       │   │   ├── diagram/     # Diagram rendering (Mermaid/Kroki)
+│       │   │   ├── modal-launcher/ # Type-safe modal system
+│       │   │   └── whiteboard/  # React Flow viewer
+│       │   ├── lib/             # Utilities & constants
+│       │   └── env.ts           # Environment validation (Zod)
+│       ├── arch/
+│       │   ├── content/docs/    # MDX documentation files
+│       │   └── diagrams/        # Diagram source files (.puml, .dot)
+│       ├── api-doc-gen/         # OpenAPI schema files (.yaml)
+│       ├── scripts/             # Code generation scripts
 │       ├── source.config.ts     # Fumadocs source config
 │       └── Dockerfile           # Docs service Dockerfile
-├── docker-compose.yml           # Services orchestration
+├── scripts/
+│   ├── dev.sh                   # Development setup script
+│   └── stop.sh                  # Stop services script
+├── docker-compose.dev.yml       # Services orchestration
+├── turbo.json                   # Turbo configuration
 ├── pnpm-workspace.yaml          # Monorepo config
-└── package.json                 # Root scripts
+└── package.json                 # Root scripts & tasks
 ```
 
 ## Usage
 
 ### Inline Mermaid Diagrams
-
+arch/
 ```mdx
 <Diagram lang="mermaid" chart="
 graph TD;
@@ -158,7 +172,7 @@ pnpm dev
 
 ### Adding New Diagram Types
 
-1. Add language mapping to `apps/docs/app/api/diagram/route.ts`:
+1. Add language mapping to [apps/docs/src/app/api/diagram/route.ts](apps/docs/src/app/api/diagram/route.ts):
    ```ts
    const LANG_MAP: Record<string, string> = {
      // ...existing
@@ -166,13 +180,42 @@ pnpm dev
    };
    ```
 
-2. Create diagram files in `apps/docs/diagrams/`
+2. Create diagram files in `apps/docs/arch/diagrams/`
 
 3. Use in MDX:
    ```mdx
    <Diagram lang="d2" path="my-diagram.d2" />
    ```
 
+### Generating API Documentation
+
+TailwindCSS 4 configuration is in [apps/docs/postcss.config.mjs](apps/docs/postcss.config.mjs). Override Fumadocs theme variables in [apps/docs/src/styles/globals.css](apps/docs/src/styles/globals.css)
+
+```Key Features
+
+### Modal Launcher System
+Type-safe, promise-based modal management with:
+- Global registration via `useModal(Component)`
+- Promise-based API: `modal.open()` returns typed result
+- Multiple concurrent modals with subscriptions
+- Custom error classes for debugging
+
+### Diagram Rendering
+Three rendering paths with type discrimination:
+- **Mermaid**: Client-side rendering (no backend needed)
+- **Kroki**: Backend prox: `docker compose -f docker-compose.dev.yml ps`
+2. Verify diagram file path is relative to `apps/docs/arch/diagrams`
+3. Check browser console for API errors
+4. Confirm language is in `LANG_MAP` in [route.ts](apps/docs/src/app/api/diagram/route.ts)
+Zod-based validation for all environment variables with server/client split pattern.
+
+## Security
+
+- **Path Traversal**: All paths resolved relative to `apps/docs/arch/diagrams` and validated
+- **File Size**: Max 256 KB per diagram file
+- **Language Allowlist**: Only mapped languages accepted
+- **No Code Execution**: Diagrams treated as opaque text sent to Kroki
+- **Include Safety**: Circular include detection and path validation
 ### Customizing Styles
 
 Edit `apps/docs/tailwind.config.ts` to customize Tailwind or override Fumadocs styles.

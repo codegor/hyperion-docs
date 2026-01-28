@@ -1,0 +1,5 @@
+*
+!.gitignore
+!codebase.instructions.md
+!/prompts
+!/prompts/**

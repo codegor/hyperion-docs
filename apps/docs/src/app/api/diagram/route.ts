@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-const BASE_DIR = path.resolve(process.cwd(), 'diagrams');
+const BASE_DIR = path.resolve(process.cwd(), 'arch/diagrams');
 const LANG_MAP: Record<string, string> = {
   puml: 'plantuml',
   plantuml: 'plantuml',

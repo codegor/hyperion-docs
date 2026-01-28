@@ -21,9 +21,9 @@
       "dependsOn": ["^typegen"],
       "outputs": ["dist/**", "!.dist/cache/**"]
     },
-    "build:openapi": {
-      "dependsOn": ["^build:openapi"],
-      "outputs": ["apps/docs/content/docs/openapi/**"],
+    "build:api-doc": {
+      "dependsOn": ["^build:api-doc"],
+      "outputs": ["apps/docs/arch/content/docs/api/**"],
       "cache": false
     }
   }

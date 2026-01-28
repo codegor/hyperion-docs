@@ -1,0 +1,6 @@
+{
+  "title": "Api Documentation",
+  "description": "API documentation and specifications",
+  "icon": "Globe",
+  "pages": ["index", "...(generated)"]
+}
